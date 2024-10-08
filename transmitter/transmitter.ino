@@ -42,7 +42,7 @@ DataPacket data;
 //if there are many with the same number there will be cross-talk
 //if they aren't matching... guess what happens
 //transmitted data is identified by this 5-digit pin, so rx's will only look for data with this identifier
-const byte address[6] = "00001";
+const byte address[6] = "34768";
 //you can change the 5-digit number but do not change the variable initialization or name
 //those are necessary for the RF24 library
 

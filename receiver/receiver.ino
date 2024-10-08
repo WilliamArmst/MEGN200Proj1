@@ -23,7 +23,7 @@ struct DataPacket {
 DataPacket data; //same structure variables 'DataPacket and 'data' as transmitter
 
 //address through which two modules communicate.
-const byte address[6] = "00001";
+const byte address[6] = "34768";
 
 
 void setup() {

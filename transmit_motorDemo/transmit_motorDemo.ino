@@ -6,7 +6,13 @@
 #include <RF24.h>
 
 // define struct
-#include "../includes/motorDemoStruct.h" // ToDo: find proper directory
+// #include "motorDemoStruct.hpp" // ToDo: find proper directory
+
+struct DataPacket {
+	int speed = 0;
+	int isReversed = false; 
+};
+
 
 #define REVERSE_BUTTON 2
 #define SPEED_PIN A0

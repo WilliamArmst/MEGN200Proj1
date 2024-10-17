@@ -1,5 +1,5 @@
-#ifndef MOTOR_DEMO_STRUCT
-#define MOTOR_DEMO_STRUCT
+#ifndef MOTOR_DEMO_STRUCT_HPP
+#define MOTOR_DEMO_STRUCT_HPP
 
 struct DataPacket {
 	int speed = 0;

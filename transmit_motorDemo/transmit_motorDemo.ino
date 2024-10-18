@@ -35,8 +35,8 @@ void setup() {
 }
 
 void loop() {
-  data.speed = map(analogRead(SPEED_PIN), 0, 1023, 0, 255); // double check syntax is correct
-  data.incrementServo = digitalRead(REVERSE_BUTTON);
+  data.speed =analogRead(SPEED_PIN); // double check syntax is correct
+  data.incrementServo = !digitalRead(REVERSE_BUTTON);
 
 
   radio.write(&data, sizeof(DataPacket)); //transmit data

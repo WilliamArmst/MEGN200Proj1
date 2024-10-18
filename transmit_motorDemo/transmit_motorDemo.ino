@@ -10,7 +10,7 @@
 
 struct DataPacket {
 	int speed = 0;
-	int isReversed = false; 
+	int incrementServo = false; 
 };
 
 
@@ -20,7 +20,6 @@ struct DataPacket {
 //create the RF24 object
 RF24 radio(9, 8);  // CE, CSN
 DataPacket data;
-bool pressed = false;
 
 const byte address[6] = "34768";
 
@@ -37,22 +36,16 @@ void setup() {
 
 void loop() {
   data.speed = map(analogRead(SPEED_PIN), 0, 1023, 0, 255); // double check syntax is correct
+  data.incrementServo = digitalRead(REVERSE_BUTTON);
 
-  // true toggle
-  if (digitalRead(REVERSE_BUTTON) == LOW && !pressed) {
-    data.isReversed = !data.isReversed;
-    pressed = true;
-  }
-  if (digitalRead(REVERSE_BUTTON) == HIGH && pressed) {
-    pressed = false;
-  }
-
-  Serial.print("In Reverse: ");
-  Serial.println(data.isReversed);
-  Serial.print("Speed: ");
-  Serial.println(data.speed);
 
   radio.write(&data, sizeof(DataPacket)); //transmit data
+
+  Serial.print("Packet Sent: {speed: ");
+  Serial.print(data.speed);
+  Serial.print(", incrementServo: ");
+  Serial.print(data.incrementServo);
+  Serial.println("}");
 
   delay(50); // transmission delay
 }

@@ -2,12 +2,13 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+#include <Servo.h>
 
 // #include "../includes/motorDemoStruct.h"
 
 struct DataPacket {
 	int speed = 0;
-	int isReversed = false; 
+	int incrementServo = false; 
 };
 
 // define pins
@@ -17,9 +18,13 @@ struct DataPacket {
 
 RF24 radio(9, 8);  // CE, CSN
 DataPacket data; //same structure variables 'DataPacket and 'data' as transmitter
+Servo myServo;
 
 bool in1State = LOW;
 bool in2State = LOW;
+
+int servoPos = 0;
+int reverseServo = 0;
 
 //address through which two modules communicate.
 const byte address[6] = "34768";
@@ -36,29 +41,48 @@ void setup() {
   pinMode(ENA_1, OUTPUT);
   pinMode(DRIVE_1A, OUTPUT);
   pinMode(DRIVE_2A, OUTPUT);
+
+  myServo.attach(10);
 }
 
 void loop() {
   if (radio.available()) {//if a signal is available
     radio.read(&data, sizeof(DataPacket));//read signal being sent
     delay(20);//20ms delay to unpack signal
+
+    Serial.print("Packet Received: {speed: ");
+    Serial.print(data.speed);
+    Serial.print(", incrementServo: ");
+    Serial.print(data.incrementServo);
+    Serial.println("}");
   }
 
-  if (data.isReversed) {
-    in1State = LOW;
-  } else {
+  if (data.incrementServo) {
+    if (reverseServo) {
+      servoPos -= 1;
+    } else {
+      servoPos += 1;
+    }
+    
+    if (servoPos >= 180 || servoPos <= 0) {
+      reverseServo = !reverseServo;
+    }
+
+    myServo.write(servoPos);
+  }
+
+  if (data.speed < 512) {
     in1State = HIGH;
-  }
-
-  if (data.speed < 3) {// 0.8%
-    in1State = LOW;
     in2State = LOW;
-    data.speed = 0;
+    map(data.speed, 0, 512, 0, 1023);
   } else {
+    in1State = LOW;
     in2State = HIGH;
+    map(data.speed, 512, 1023, 0, 1023);
   }
-
+  
+  // in1State = HIGH; in2State = HIGH; data.speed = 128;
   digitalWrite(DRIVE_1A, in1State);
-  digitalWrite(DRIVE_1A, in1State);
+  digitalWrite(DRIVE_2A, in2State);
   analogWrite(ENA_1, data.speed);
 }

@@ -42,7 +42,7 @@ void setup() {
   pinMode(DRIVE_1A, OUTPUT);
   pinMode(DRIVE_2A, OUTPUT);
 
-  myServo.attach(10);
+  myServo.attach(7);
 }
 
 void loop() {
@@ -57,6 +57,7 @@ void loop() {
     Serial.println("}");
   }
 
+  data.incrementServo = 1;
   if (data.incrementServo) {
     if (reverseServo) {
       servoPos -= 1;
@@ -67,14 +68,14 @@ void loop() {
     if (servoPos >= 180 || servoPos <= 0) {
       reverseServo = !reverseServo;
     }
-
+    delay(3);
     myServo.write(servoPos);
   }
 
   if (data.speed < 512) {
     in1State = HIGH;
     in2State = LOW;
-    map(data.speed, 0, 512, 0, 1023);
+    map(data.speed, 0, 512, 1023, 0);
   } else {
     in1State = LOW;
     in2State = HIGH;

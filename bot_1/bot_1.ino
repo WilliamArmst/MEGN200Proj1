@@ -82,16 +82,16 @@ void loop() {
   Serial.print(data.rightPress);
   Serial.println(";");
 
-  if (data.rightX > 0) {
+  if (data.rightX > 512) {
     clampPos++;
-  } else if (data.rightX < 0) {
+  } else if (data.rightX < 512) {
     clampPos--;
   }
   constrain(clampPos, clampMin, clampMax);
 
-  if (data.rightY > 0) {
+  if (data.rightY > 512) {
     armPos++;
-  } else if (data.rightY < 0) {
+  } else if (data.rightY < 512) {
     armPos--;
   }
   constrain(armPos, armMin, armMax);

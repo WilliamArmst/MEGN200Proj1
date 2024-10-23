@@ -14,10 +14,10 @@ Servo clampServo;
 int armPos = 90;
 int clampPos = 90;
 
-const int minArmPos = 70; // arm is theoretically 50-150
-const int maxArmPos = 130;
-const int minClampPos = 70; // clamp is theoretically 50-140
-const int maxClampPos = 120;
+const int minArmPos = 63; // arm is theoretically 50-150
+const int maxArmPos = 145;
+const int minClampPos = 65; // clamp is theoretically 50-140
+const int maxClampPos = 136;
 
 void setup() {
   Serial.begin(9600);

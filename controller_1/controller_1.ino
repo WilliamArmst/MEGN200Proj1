@@ -33,7 +33,6 @@ void setup() {
   radio.stopListening();
 
   Serial.begin(9600);
-
 }
 
 void loop() {

@@ -58,5 +58,5 @@ void loop() {
   Serial.print(data.rightPress);
   Serial.println(";");
 
-  radio.write(&data, sizeof(DataPacket));//transmit data
+  radio.write(&data, sizeof(DataPacket)); //transmit data
 }

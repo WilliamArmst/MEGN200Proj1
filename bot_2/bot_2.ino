@@ -46,6 +46,8 @@ int rightSpeed = 0;
 int rightDrive1 = LOW;
 int rightDrive2 = LOW;
 
+unsigned long lastUpdated = 0;
+
 void setup() {
   // setup radio
   radio.begin();
@@ -76,7 +78,11 @@ void loop() {
   if (radio.available()) {
     radio.read(&data, sizeof(DataPacket));
     delay(20);
-    Serial.print("Data Received: Right (x, y): (");
+    lastUpdated = millis();
+
+    Serial.print("Data Received at ");
+    Serial.print(lastUpdated);
+    Serial.print(": Right (x, y): (");
     Serial.print(data.rightX);
     Serial.print(", ");
     Serial.print(data.rightY);
@@ -90,89 +96,145 @@ void loop() {
     Serial.print(data.rightPress);
     Serial.println(";");
 
-    // clamp control (right joystick, left open, right close)
-    if (data.rightX > 540) {
-      clampPos += map(data.rightX, 540, 1023, 1, 10);
-    } else if (data.rightX < 480) {
-      clampPos -= map(data.rightX, 0, 480, 10, 1);;
-    }
-    clampPos = constrain(clampPos, clampMin, clampMax);
-    Serial.print("Clamp Pos: ");
-    Serial.println(clampPos);
-    clampServo.write(clampPos);
+  }
 
-    // arm control (right joystick)
-    if (data.rightY > 540) {
-      armPos += map(data.rightY, 540, 1023, 1, 5);
-    } else if (data.rightY < 480) {
-      armPos -= map(data.rightY, 0, 480, 5, 1);
-    }
-    armPos = constrain(armPos, armMin, armMax);
-    Serial.print("Arm Pos: ");
-    Serial.println(armPos);
-    armServo.write(armPos);
+  if (millis() - lastUpdated >= 100) return; // timeout from last received signal
 
-    // movement (left joystick)
-    // motor speeds go from 0 to 255
-    if (data.leftY > 540 /* ToDo: find deadzone to rotate in place, currently +-12 (2%) */) {
-      // set drives forward
-      rightDrive1 = HIGH;
-      rightDrive2 = LOW;
-      leftDrive1 = HIGH;
-      leftDrive2 = LOW;
-      rightSpeed = map(data.leftY, 540, 1023, 0, 255);
-      leftSpeed = rightSpeed;
-      if (data.leftX > 540) {
-        rightSpeed -= map(data.leftX, 540, 1023, 0, rightSpeed);
-      } else if (data.leftX < 480) {
-        leftSpeed -= map(data.leftX, 0, 480, leftSpeed, 0);
-      }
-    } else if (data.leftY < 480 /* ToDo: find deadzone to rotate in place, currently +-12 (2%) */) {
-      // set drives backward
+  if (data.leftPress == LOW && data.rightPress == LOW) {
+    return dance();
+  }
+
+  // clamp control (right joystick, left open, right close)
+  if (data.rightX > 540) {
+    clampPos += map(data.rightX, 540, 1023, 1, 10);
+  } else if (data.rightX < 480) {
+    clampPos -= map(data.rightX, 0, 480, 10, 1);;
+  }
+  clampPos = constrain(clampPos, clampMin, clampMax);
+  Serial.print("Clamp Pos: ");
+  Serial.println(clampPos);
+  clampServo.write(clampPos);
+
+  // arm control (right joystick)
+  if (data.rightY > 540) {
+    armPos += map(data.rightY, 540, 1023, 1, 5);
+  } else if (data.rightY < 480) {
+    armPos -= map(data.rightY, 0, 480, 5, 1);
+  }
+  armPos = constrain(armPos, armMin, armMax);
+  Serial.print("Arm Pos: ");
+  Serial.println(armPos);
+  armServo.write(armPos);
+
+  // movement (left joystick)
+  // motor speeds go from 0 to 255
+  if (data.leftY > 540 /* ToDo: find deadzone to rotate in place, currently +-12 (2%) */) {
+    // set drives forward
+    rightDrive1 = HIGH;
+    rightDrive2 = LOW;
+    leftDrive1 = HIGH;
+    leftDrive2 = LOW;
+    rightSpeed = map(data.leftY, 540, 1023, 0, 255);
+    leftSpeed = rightSpeed;
+    if (data.leftX > 540) {
+      rightSpeed -= map(data.leftX, 540, 1023, 0, rightSpeed);
+    } else if (data.leftX < 480) {
+      leftSpeed -= map(data.leftX, 0, 480, leftSpeed, 0);
+    }
+  } else if (data.leftY < 480 /* ToDo: find deadzone to rotate in place, currently +-12 (2%) */) {
+    // set drives backward
+    rightDrive1 = LOW;
+    rightDrive2 = HIGH;
+    leftDrive1 = LOW;
+    leftDrive2 = HIGH;
+    rightSpeed = map(data.leftY, 0, 480, 255, 0);
+    leftSpeed = rightSpeed;
+    if (data.leftX > 540) {
+      rightSpeed -= map(data.leftX, 540, 1023, 0, rightSpeed);
+    } else if (data.leftX < 480) {
+      leftSpeed -= map(data.leftX, 0, 480, leftSpeed, 0);
+    }
+  } else {
+    // rotate in place
+    if (data.leftX > 540) {
+      // rotate right
       rightDrive1 = LOW;
       rightDrive2 = HIGH;
+      leftDrive1 = HIGH;
+      leftDrive2 = LOW;
+      rightSpeed = map(data.leftX, 540, 1023, 0, 128);
+      leftSpeed = rightSpeed;
+    } else if (data.leftX < 480) {
+      // rotate left
+      rightDrive1 = HIGH;
+      rightDrive2 = LOW;
       leftDrive1 = LOW;
       leftDrive2 = HIGH;
-      rightSpeed = map(data.leftY, 0, 480, 255, 0);
+      rightSpeed = map(data.leftX, 0, 480, 128, 0);
       leftSpeed = rightSpeed;
-      if (data.leftX > 540) {
-        rightSpeed -= map(data.leftX, 540, 1023, 0, rightSpeed);
-      } else if (data.leftX < 480) {
-        leftSpeed -= map(data.leftX, 0, 480, leftSpeed, 0);
-      }
     } else {
-      // rotate in place
-      if (data.leftX > 540) {
-        // rotate right
-        rightDrive1 = LOW;
-        rightDrive2 = HIGH;
-        leftDrive1 = HIGH;
-        leftDrive2 = LOW;
-        rightSpeed = map(data.leftX, 540, 1023, 0, 128);
-        leftSpeed = rightSpeed;
-      } else if (data.leftX < 480) {
-        // rotate left
-        rightDrive1 = HIGH;
-        rightDrive2 = LOW;
-        leftDrive1 = LOW;
-        leftDrive2 = HIGH;
-        rightSpeed = map(data.leftX, 0, 480, 128, 0);
-        leftSpeed = rightSpeed;
-      } else {
-        // not moving
-        rightDrive1 = LOW;
-        rightDrive2 = LOW;
-        leftDrive1 = LOW;
-        leftDrive2 = LOW;
-      }
+      // not moving
+      rightDrive1 = LOW;
+      rightDrive2 = LOW;
+      leftDrive1 = LOW;
+      leftDrive2 = LOW;
     }
-    digitalWrite(RIGHT_DRIVE_1, rightDrive1);
-    digitalWrite(RIGHT_DRIVE_2, rightDrive2);
-    digitalWrite(LEFT_DRIVE_1, leftDrive1);
-    digitalWrite(LEFT_DRIVE_2, leftDrive2);
-    analogWrite(RIGHT_SPEED, rightSpeed);
-    analogWrite(LEFT_SPEED, leftSpeed);
+  }
+  digitalWrite(RIGHT_DRIVE_1, rightDrive1);
+  digitalWrite(RIGHT_DRIVE_2, rightDrive2);
+  digitalWrite(LEFT_DRIVE_1, leftDrive1);
+  digitalWrite(LEFT_DRIVE_2, leftDrive2);
+  analogWrite(RIGHT_SPEED, rightSpeed);
+  analogWrite(LEFT_SPEED, leftSpeed);
 
-    delay(20);
+  delay(20);
+}
+
+void dance() {
+  rightSpeed = 150;
+  leftSpeed = 150;
+  
+  // spin right
+  rightDrive1 = LOW;
+  rightDrive2 = HIGH;
+  leftDrive1 = HIGH;
+  leftDrive2 = LOW;
+
+  digitalWrite(RIGHT_DRIVE_1, rightDrive1);
+  digitalWrite(RIGHT_DRIVE_2, rightDrive2);
+  digitalWrite(LEFT_DRIVE_1, leftDrive1);
+  digitalWrite(LEFT_DRIVE_2, leftDrive2);
+  analogWrite(RIGHT_SPEED, rightSpeed);
+  analogWrite(LEFT_SPEED, leftSpeed);
+
+  // move arm up and down
+  for (int i = armMin; i < armMax; i++) {
+    armServo.write(i);
+    delay(5);
+  }
+  for (int i = armMax; i > armMin; i--) {
+    armServo.write(i);
+    delay(5);
+  }
+
+  // spin left
+  rightDrive1 = HIGH;
+  rightDrive2 = LOW;
+  leftDrive1 = LOW;
+  leftDrive2 = HIGH;
+
+  digitalWrite(RIGHT_DRIVE_1, rightDrive1);
+  digitalWrite(RIGHT_DRIVE_2, rightDrive2);
+  digitalWrite(LEFT_DRIVE_1, leftDrive1);
+  digitalWrite(LEFT_DRIVE_2, leftDrive2);
+
+  // move arm up and down
+  for (int i = armMin; i < armMax; i++) {
+    armServo.write(i);
+    delay(5);
+  }
+  for (int i = armMax; i > armMin; i--) {
+    armServo.write(i);
+    delay(5);
   }
 }

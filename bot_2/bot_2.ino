@@ -32,11 +32,11 @@ Servo armServo;
 Servo clampServo;
 
 int armPos = 90;
-const int armMin = 63;
+const int armMin = 52;
 const int armMax = 145;
 int clampPos = 90;
-const int clampMin = 65;
-const int clampMax = 136;
+const int clampMin = 55;
+const int clampMax = 142;
 
 // drive variables
 int leftSpeed = 0;
@@ -80,6 +80,7 @@ void loop() {
     delay(20);
     lastUpdated = millis();
 
+    /*
     Serial.print("Data Received at ");
     Serial.print(lastUpdated);
     Serial.print(": Right (x, y): (");
@@ -95,24 +96,25 @@ void loop() {
     Serial.print(", ");
     Serial.print(data.rightPress);
     Serial.println(";");
+    */
 
   }
 
   if (millis() - lastUpdated >= 100) return; // timeout from last received signal
 
-  if (data.leftPress == LOW && data.rightPress == LOW) {
+  if (data.leftPress == HIGH && data.rightPress == HIGH) {
     return dance();
   }
 
   // clamp control (right joystick, left open, right close)
-  if (data.rightX > 540) {
-    clampPos += map(data.rightX, 540, 1023, 1, 10);
-  } else if (data.rightX < 480) {
-    clampPos -= map(data.rightX, 0, 480, 10, 1);;
+  if (data.rightX > 600) {
+    clampPos += map(data.rightX, 600, 1023, 1, 10);
+  } else if (data.rightX < 424) {
+    clampPos -= map(data.rightX, 0, 424, 10, 1);;
   }
   clampPos = constrain(clampPos, clampMin, clampMax);
-  Serial.print("Clamp Pos: ");
-  Serial.println(clampPos);
+  // Serial.print("Clamp Pos: ");
+  // Serial.println(clampPos);
   clampServo.write(clampPos);
 
   // arm control (right joystick)
@@ -122,8 +124,8 @@ void loop() {
     armPos -= map(data.rightY, 0, 480, 5, 1);
   }
   armPos = constrain(armPos, armMin, armMax);
-  Serial.print("Arm Pos: ");
-  Serial.println(armPos);
+  // Serial.print("Arm Pos: ");
+  // Serial.println(armPos);
   armServo.write(armPos);
 
   // movement (left joystick)
@@ -162,7 +164,7 @@ void loop() {
       rightDrive2 = HIGH;
       leftDrive1 = HIGH;
       leftDrive2 = LOW;
-      rightSpeed = map(data.leftX, 540, 1023, 0, 128);
+      rightSpeed = map(data.leftX, 540, 1023, 0, 100);
       leftSpeed = rightSpeed;
     } else if (data.leftX < 480) {
       // rotate left
@@ -170,7 +172,7 @@ void loop() {
       rightDrive2 = LOW;
       leftDrive1 = LOW;
       leftDrive2 = HIGH;
-      rightSpeed = map(data.leftX, 0, 480, 128, 0);
+      rightSpeed = map(data.leftX, 0, 480, 100, 0);
       leftSpeed = rightSpeed;
     } else {
       // not moving
@@ -180,6 +182,9 @@ void loop() {
       leftDrive2 = LOW;
     }
   }
+
+  // Serial.println(rightSpeed);
+  // Serial.println(leftSpeed);
   digitalWrite(RIGHT_DRIVE_1, rightDrive1);
   digitalWrite(RIGHT_DRIVE_2, rightDrive2);
   digitalWrite(LEFT_DRIVE_1, leftDrive1);

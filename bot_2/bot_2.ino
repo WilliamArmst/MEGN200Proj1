@@ -77,7 +77,7 @@ void setup() {
 void loop() {
   if (radio.available()) {
     radio.read(&data, sizeof(DataPacket));
-    delay(20);
+    delay(0);
     lastUpdated = millis();
 
     /*
@@ -138,11 +138,6 @@ void loop() {
     leftDrive2 = LOW;
     rightSpeed = map(data.leftY, 540, 1023, 0, 255);
     leftSpeed = rightSpeed;
-    if (data.leftX > 540) {
-      rightSpeed -= map(data.leftX, 540, 1023, 0, rightSpeed);
-    } else if (data.leftX < 480) {
-      leftSpeed -= map(data.leftX, 0, 480, leftSpeed, 0);
-    }
   } else if (data.leftY < 480 /* ToDo: find deadzone to rotate in place, currently +-12 (2%) */) {
     // set drives backward
     rightDrive1 = LOW;
@@ -151,28 +146,23 @@ void loop() {
     leftDrive2 = HIGH;
     rightSpeed = map(data.leftY, 0, 480, 255, 0);
     leftSpeed = rightSpeed;
-    if (data.leftX > 540) {
-      rightSpeed -= map(data.leftX, 540, 1023, 0, rightSpeed);
-    } else if (data.leftX < 480) {
-      leftSpeed -= map(data.leftX, 0, 480, leftSpeed, 0);
-    }
   } else {
     // rotate in place
-    if (data.leftX > 540) {
+    if (data.leftX < 480) {
       // rotate right
       rightDrive1 = LOW;
       rightDrive2 = HIGH;
       leftDrive1 = HIGH;
       leftDrive2 = LOW;
-      rightSpeed = map(data.leftX, 540, 1023, 0, 100);
+      rightSpeed = map(data.leftX, 0, 480, 100, 0);
       leftSpeed = rightSpeed;
-    } else if (data.leftX < 480) {
+    } else if (data.leftX > 540) {
       // rotate left
       rightDrive1 = HIGH;
       rightDrive2 = LOW;
       leftDrive1 = LOW;
       leftDrive2 = HIGH;
-      rightSpeed = map(data.leftX, 0, 480, 100, 0);
+      rightSpeed = map(data.leftX, 540, 1023, 0, 100);
       leftSpeed = rightSpeed;
     } else {
       // not moving
